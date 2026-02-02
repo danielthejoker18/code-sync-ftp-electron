@@ -64,13 +64,19 @@ Os arquivos de instalação serão criados na pasta `dist/`.
 Para gerar os instaladores para uma plataforma específica, você pode usar os comandos abaixo (requer ambiente compatível):
 ```bash
 # Para Windows
-electron-builder --win
+npm run dist -- --win
 
 # Para Linux
-electron-builder --linux
+npm run dist -- --linux
 
-# Para macOS (gera um build universal Intel/Apple Silicon)
-electron-builder --mac
+# Para macOS (Universal - Intel + Apple Silicon)
+npm run dist -- --mac
+
+# Para macOS (Especificamente Apple Silicon - M1/M2/M3)
+npm run dist -- --arm64
+
+# Para macOS (Especificamente Intel)
+npm run dist -- --x64
 ```
 
 ## 🙏 Agradecimentos
