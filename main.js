@@ -17,6 +17,11 @@ let isUploading = false;
 let isSyncing = false; // Para controlar o texto do menu (Iniciar/Parar)
 let isQuitting = false; // Para saber se é pra fechar mesmo ou só esconder
 
+// --- EVENTO BEFORE-QUIT (Correção para CMD+Q e Dock Quit) ---
+app.on('before-quit', () => {
+    isQuitting = true;
+});
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1000,
