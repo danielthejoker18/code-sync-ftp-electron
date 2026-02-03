@@ -12,10 +12,15 @@ let watchers = [];
 const client = new ftp.Client();
 
 // Variáveis de Estado
-let uploadQueue = [];      
-let isUploading = false;   
+let uploadQueue = [];
+let isUploading = false;
 let isSyncing = false; // Para controlar o texto do menu (Iniciar/Parar)
 let isQuitting = false; // Para saber se é pra fechar mesmo ou só esconder
+
+// --- EVENTO BEFORE-QUIT (Correção para CMD+Q e Dock Quit) ---
+app.on('before-quit', () => {
+    isQuitting = true;
+});
 
 function createWindow() {
     mainWindow = new BrowserWindow({
@@ -28,7 +33,7 @@ function createWindow() {
             contextIsolation: false
         }
     });
-    
+
     mainWindow.setMenuBarVisibility(false);
     mainWindow.loadFile('index.html');
 
@@ -37,7 +42,10 @@ function createWindow() {
         if (!isQuitting) {
             event.preventDefault(); // Cancela o fechamento
             mainWindow.hide();      // Esconde a janela
-            mainWindow.setSkipTaskbar(true); // <--- FORÇA SUMIR DA BARRA DE TAREFAS
+            // No macOS, não queremos sumir da Dock ao fechar a janela, pois é comportamento padrão manter o app rodando.
+            if (process.platform !== 'darwin') {
+                mainWindow.setSkipTaskbar(true); // <--- FORÇA SUMIR DA BARRA DE TAREFAS (Windows/Linux)
+            }
             return false;
         }
     });
@@ -46,20 +54,39 @@ function createWindow() {
     mainWindow.on('minimize', (event) => {
         event.preventDefault();
         mainWindow.hide();
-        mainWindow.setSkipTaskbar(true); // <--- FORÇA SUMIR DA BARRA DE TAREFAS
+        if (process.platform !== 'darwin') {
+            mainWindow.setSkipTaskbar(true);
+        }
     });
 
     // --- QUANDO MOSTRAR DE NOVO ---
     mainWindow.on('show', () => {
         mainWindow.setSkipTaskbar(false); // Volta a aparecer na barra de tarefas
+        if (process.platform === 'darwin') {
+            app.dock.show();
+        }
     });
 }
+
+// --- EVENTO ACTIVATE (Importante para macOS) ---
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+        createWindow();
+    } else {
+        if (mainWindow) {
+            mainWindow.show();
+            if (process.platform === 'darwin') {
+                app.dock.show();
+            }
+        }
+    }
+});
 
 // --- CRIAÇÃO DA BANDEJA (TRAY) ---
 function createTray() {
     const iconPath = path.join(__dirname, 'icon.ico');
     const trayIcon = nativeImage.createFromPath(iconPath);
-    
+
     tray = new Tray(trayIcon);
     tray.setToolTip('CodeSyncFtp'); // Texto ao passar o mouse
 
@@ -74,13 +101,13 @@ function updateTrayMenu() {
     if (!tray) return;
 
     const contextMenu = Menu.buildFromTemplate([
-        { 
-            label: 'Abrir CodeSyncFtp', 
-            click: () => mainWindow.show() 
+        {
+            label: 'Abrir CodeSyncFtp',
+            click: () => mainWindow.show()
         },
         { type: 'separator' },
-        { 
-            label: isSyncing ? '⏹ Parar' : '▶ Iniciar', 
+        {
+            label: isSyncing ? '⏹ Parar' : '▶ Iniciar',
             click: () => {
                 // Ao clicar no Tray, avisamos o Front para clicar no botão virtualmente
                 // Isso mantém a lógica centralizada
@@ -90,8 +117,8 @@ function updateTrayMenu() {
             }
         },
         { type: 'separator' },
-        { 
-            label: 'Sair', 
+        {
+            label: 'Sair',
             click: () => {
                 isQuitting = true; // Agora pode fechar
                 app.quit();
@@ -114,6 +141,9 @@ if (!gotTheLock) {
             if (mainWindow.isMinimized()) mainWindow.restore();
             mainWindow.show();
             mainWindow.setSkipTaskbar(false);
+            if (process.platform === 'darwin') {
+                app.dock.show();
+            }
             mainWindow.focus();
         }
     });
@@ -149,7 +179,7 @@ ipcMain.handle('select-folder', async () => {
 ipcMain.on('start-sync', async (event, config) => {
     sendLog("🚀 Iniciando serviço...", "info");
     await stopAllWatchers();
-    
+
     uploadQueue = [];
     isUploading = false;
 
@@ -170,7 +200,7 @@ ipcMain.on('start-sync', async (event, config) => {
     } catch (err) {
         sendLog(`❌ Erro FTP: ${err.message}`, "error");
         // Avisa o front que falhou para destravar o botão
-        event.reply('sync-error'); 
+        event.reply('sync-error');
         return;
     }
 
@@ -187,20 +217,20 @@ ipcMain.on('start-sync', async (event, config) => {
 ipcMain.on('stop-sync', async () => {
     await stopAllWatchers();
     client.close();
-    uploadQueue = []; 
+    uploadQueue = [];
     isUploading = false;
-    
+
     isSyncing = false;
     updateTrayMenu(); // Atualiza menu do Tray para "Iniciar"
-    
+
     sendLog("🛑 Serviço parado.", "error");
 });
 
 // --- WATCHER ---
 
 function createProjectWatcher(project, globalConfig) {
-    const userIgnored = project.ignored 
-        ? project.ignored.split(',').map(item => item.trim().toLowerCase()) 
+    const userIgnored = project.ignored
+        ? project.ignored.split(',').map(item => item.trim().toLowerCase())
         : [];
 
     const systemIgnored = [/node_modules/, /\.git/, /\.vscode/, /desktop\.ini/];
@@ -213,7 +243,7 @@ function createProjectWatcher(project, globalConfig) {
     });
 
     w.on('all', async (event, fullPath) => {
-        if (event === 'addDir') return; 
+        if (event === 'addDir') return;
 
         const fileName = path.basename(fullPath).toLowerCase();
         const shouldIgnore = userIgnored.some(rule => {
@@ -299,7 +329,7 @@ async function handleSyncTask({ action, fullPath, projectConfig, globalConfig })
             await client.ensureDir(path.dirname(remotePath));
             await client.uploadFrom(fullPath, remotePath);
             sendLog(`✅ Sucesso: ${relativePath}`, "success");
-        } 
+        }
         else if (action === 'delete_file') {
             sendLog(`🗑️ [Del File] ${relativePath}`, "error");
             try { await client.remove(remotePath); } catch (e) { if (!e.message.includes("550")) throw e; }
