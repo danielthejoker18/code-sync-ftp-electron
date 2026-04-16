@@ -11,9 +11,10 @@ Guidance for AI coding agents working in this repository.
 
 ## Run And Build
 
-- Use Docker Compose as the standard workflow for run/build.
+- Use Docker Compose as the standard workflow for Linux, macOS, and WSL.
 - Start development GUI app on Linux desktop sessions: `docker compose --profile dev up --build app-dev`
 - Build Linux installer(s): `docker compose --profile build run --rm app-build`
+- For Windows run/build, use local npm workflow (`npm install`, `npm start`, `npm run dist -- --win`).
 - Optional cleanup: `docker compose down -v`
 
 ## Architecture Boundaries

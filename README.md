@@ -35,7 +35,7 @@ Acesse a aba [Releases](https://github.com/edenilsonmota/code-sync-ftp-electron/
 
 ## 🐳 Desenvolvimento e Build (Docker Compose)
 
-Este projeto usa Docker como forma principal de execução e build.
+Este projeto usa Docker como forma principal de execução e build para Linux, macOS e WSL.
 
 ### Pré-requisitos
 
@@ -66,13 +66,23 @@ docker compose --profile build run --rm app-build
 
 Os artefatos serão gerados em `dist/` no diretório do projeto.
 
-### 4) Limpeza opcional
+### 4) Buildar ou rodar no Windows (local)
+
+```bash
+npm install
+npm start
+npm run dist -- --win
+```
+
+No Windows, use fluxo local com npm (sem Wine em Docker).
+
+### 5) Limpeza opcional
 
 ```bash
 docker compose down -v
 ```
 
-> Observação: o fluxo de build no container está focado em Linux. Builds Windows/macOS exigem ambientes e toolchains específicos.
+> Observacao: o fluxo em Docker deste repositório e voltado para Linux, macOS e WSL.
 
 ## 🙏 Agradecimentos
 
