@@ -11,10 +11,10 @@ Guidance for AI coding agents working in this repository.
 
 ## Run And Build
 
-- Install dependencies: `npm install`
-- Run locally: `npm start`
-- Build installer(s): `npm run dist`
-- Build specific targets: `npm run dist -- --win|--linux|--mac`
+- Use Docker Compose as the standard workflow for run/build.
+- Start development GUI app on Linux desktop sessions: `docker compose --profile dev up --build app-dev`
+- Build Linux installer(s): `docker compose --profile build run --rm app-build`
+- Optional cleanup: `docker compose down -v`
 
 ## Architecture Boundaries
 
@@ -46,7 +46,8 @@ Guidance for AI coding agents working in this repository.
 ## Validation
 
 - There are no test or lint scripts in `package.json`.
-- After code changes, validate by running `npm start` and manually checking:
+- After code changes, validate by running the app via compose (`docker compose --profile dev up --build app-dev`) and manually checking:
   - start/stop sync flow
   - tray actions (open/start-stop/exit)
   - log updates in renderer
+- Ensure the Linux host graphical session permissions allow containerized GUI apps.

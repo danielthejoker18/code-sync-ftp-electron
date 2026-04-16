@@ -33,51 +33,46 @@ Acesse a aba [Releases](https://github.com/edenilsonmota/code-sync-ftp-electron/
 4. **Trabalhar:** Abra seu editor favorito e comece a codar. O CodeSyncFtp fará o resto.
    > **Nota:** Ao clicar no "X" para fechar, o app será minimizado para a bandeja. Para sair totalmente, clique com o botão direito no ícone do relógio e escolha "Sair".
 
-## 💻 Desenvolvimento (Rodar localmente)
+## 🐳 Desenvolvimento e Build (Docker Compose)
 
-Se você quiser clonar e editar o código fonte:
+Este projeto usa Docker como forma principal de execução e build.
+
+### Pré-requisitos
+
+- Docker
+- Docker Compose (`docker compose`)
+- Linux desktop com servidor gráfico compatível (Wayland e derivados)
+
+### 1) Clonar o projeto
 
 ```bash
-# Clone o repositório
 git clone https://github.com/edenilsonmota/code-sync-ftp-electron.git
-
-# Entre na pasta
 cd code-sync-ftp-electron
-
-# Instale as dependências
-npm install
-
-# Inicie em modo de desenvolvimento
-npm start
 ```
 
-## 🏗️ Compilando o Projeto (Building)
+### 2) Rodar o app em modo desenvolvimento (GUI)
 
-Para gerar os instaladores para as diferentes plataformas, use o comando:
+Suba o serviço de desenvolvimento:
 
 ```bash
-# Para compilar para a plataforma atual (Windows, Linux ou macOS)
-npm run dist
+docker compose --profile dev up --build app-dev
 ```
-Os arquivos de instalação serão criados na pasta `dist/`.
 
-Para gerar os instaladores para uma plataforma específica, você pode usar os comandos abaixo (requer ambiente compatível):
+### 3) Buildar instaladores Linux
+
 ```bash
-# Para Windows
-npm run dist -- --win
-
-# Para Linux
-npm run dist -- --linux
-
-# Para macOS (Universal - Intel + Apple Silicon)
-npm run dist -- --mac
-
-# Para macOS (Especificamente Apple Silicon - M1/M2/M3)
-npm run dist -- --arm64
-
-# Para macOS (Especificamente Intel)
-npm run dist -- --x64
+docker compose --profile build run --rm app-build
 ```
+
+Os artefatos serão gerados em `dist/` no diretório do projeto.
+
+### 4) Limpeza opcional
+
+```bash
+docker compose down -v
+```
+
+> Observação: o fluxo de build no container está focado em Linux. Builds Windows/macOS exigem ambientes e toolchains específicos.
 
 ## 🙏 Agradecimentos
 
