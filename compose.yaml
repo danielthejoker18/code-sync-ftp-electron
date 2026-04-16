@@ -39,8 +39,10 @@ services:
     volumes:
       - ./:/app
       - node_modules:/app/node_modules
-    user: "${UID:-1000}:${GID:-1000}"
-    command: npm run dist -- --linux
+    command: >
+      sh -lc 'chmod +x /app/node_modules/7zip-bin/linux/x64/7za || true;
+      npm run dist -- --linux;
+      chown -R 1000:1000 /app/dist || true'
 
 volumes:
   node_modules:
