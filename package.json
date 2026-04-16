@@ -29,6 +29,18 @@
                   "icon": "icon.png",
                   "category": "Development"
                 },
+              "pacman": {
+                "artifactName": "${name}-${version}-${arch}.pkg.tar.zst",
+                "depends": [
+                  "gtk3",
+                  "libnotify",
+                  "nss",
+                  "libxss",
+                  "libxtst",
+                  "xdg-utils",
+                  "at-spi2-core"
+                ]
+              },
               "mac": {
                 "target": [
                   "dmg",
