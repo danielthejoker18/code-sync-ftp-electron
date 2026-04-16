@@ -64,7 +64,11 @@ docker compose --profile dev up --build app-dev
 docker compose --profile build run --rm app-build
 ```
 
-Os artefatos serão gerados em `dist/` no diretório do projeto.
+Os artefatos serão gerados em `dist/` no diretório do projeto, incluindo:
+
+- `CodeSyncFtp-<versao>.AppImage`
+- `code-sync-ftp_<versao>_amd64.deb`
+- `code-sync-ftp-<versao>-1-x86_64.pkg.tar.zst` para Arch Linux
 
 ### 4) Buildar ou rodar no Windows (local)
 

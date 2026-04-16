@@ -23,7 +23,8 @@
     "linux": {
           "target": [
             "AppImage",
-            "deb"
+            "deb",
+            "pacman"
           ],
                   "icon": "icon.png",
                   "category": "Development"
