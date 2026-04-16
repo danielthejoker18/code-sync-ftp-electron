@@ -43,13 +43,13 @@ function addProjectRow(localVal = '', remoteVal = '') {
     div.innerHTML = `
         <div style="display:flex; gap:5px;">
             <input type="text" value="${localVal}" placeholder="Pasta Local (C:\\...)" class="input-local" readonly>
-            <button class="btn-folder" onclick="selectFolder(this)">📂</button>
+            <button class="btn-folder" onclick="selectFolder(this)">Selecionar</button>
         </div>
         <div class="remote-field">
             <input type="text" value="${remoteVal}" placeholder="Pasta Remota (/web/...)" class="input-remote">
-            <button class="btn-remote-folder" onclick="openRemotePicker(this)">📁 FTP</button>
+            <button class="btn-remote-folder" onclick="openRemotePicker(this)">Escolher FTP</button>
         </div>
-        <button class="btn-remove" onclick="removeRow(this)">X</button>
+        <button class="btn-remove" onclick="removeRow(this)">Remover</button>
     `;
     projectList.appendChild(div);
 }
@@ -103,7 +103,7 @@ function renderRemoteDirectoryList(directories) {
     directories.forEach(dirName => {
         const btn = document.createElement('button');
         btn.className = 'remote-item';
-        btn.innerText = `📁 ${dirName}`;
+        btn.innerText = `Pasta: ${dirName}`;
         btn.onclick = () => loadRemoteDirectory(joinRemotePath(remotePickerState.currentPath, dirName));
         remoteList.appendChild(btn);
     });

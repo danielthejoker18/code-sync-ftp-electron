@@ -107,7 +107,7 @@ function updateTrayMenu() {
         },
         { type: 'separator' },
         {
-            label: isSyncing ? '⏹ Parar' : '▶ Iniciar',
+            label: isSyncing ? 'Parar' : 'Iniciar',
             click: () => {
                 // Ao clicar no Tray, avisamos o Front para clicar no botão virtualmente
                 // Isso mantém a lógica centralizada
@@ -159,7 +159,7 @@ if (!gotTheLock) {
 
 ipcMain.on('save-settings', (event, data) => {
     store.set('config', data);
-    console.log('💾 Configurações salvas.');
+    console.log('Configurações salvas.');
 });
 
 // 2. Carregar configurações ao abrir
@@ -170,7 +170,7 @@ ipcMain.handle('get-settings', () => {
 ipcMain.handle('test-ftp-credentials', async (event, config) => {
     const testClient = new ftp.Client();
 
-    sendLog("🔎 Testando credenciais FTP...", "info");
+    sendLog("Testando credenciais FTP...", "info");
 
     try {
         await testClient.access({
@@ -181,10 +181,10 @@ ipcMain.handle('test-ftp-credentials', async (event, config) => {
             secure: false
         });
 
-        sendLog("✅ Credenciais FTP válidas.", "success");
+        sendLog("Credenciais FTP válidas.", "success");
         return { ok: true, message: "Conexão FTP estabelecida com sucesso!" };
     } catch (err) {
-        sendLog(`❌ Falha no teste FTP: ${err.message}`, "error");
+        sendLog(`Falha no teste FTP: ${err.message}`, "error");
         return { ok: false, message: `Falha ao conectar: ${err.message}` };
     } finally {
         testClient.close();
@@ -248,14 +248,14 @@ ipcMain.handle('select-folder', async () => {
 
 // 4. INICIAR O SYNC
 ipcMain.on('start-sync', async (event, config) => {
-    sendLog("🚀 Iniciando serviço...", "info");
+    sendLog("Iniciando servico...", "info");
     await stopAllWatchers();
 
     uploadQueue = [];
     isUploading = false;
 
     if (!config.projects || config.projects.length === 0) {
-        sendLog("⚠️ Nenhuma pasta configurada!", "error");
+        sendLog("Nenhuma pasta configurada!", "error");
         return;
     }
 
@@ -267,9 +267,9 @@ ipcMain.on('start-sync', async (event, config) => {
             port: parseInt(config.port) || 21,
             secure: false
         });
-        sendLog("✅ Conexão FTP estabelecida!", "success");
+        sendLog("Conexao FTP estabelecida!", "success");
     } catch (err) {
-        sendLog(`❌ Erro FTP: ${err.message}`, "error");
+        sendLog(`Erro FTP: ${err.message}`, "error");
         // Avisa o front que falhou para destravar o botão
         event.reply('sync-error');
         return;
@@ -281,7 +281,7 @@ ipcMain.on('start-sync', async (event, config) => {
 
     isSyncing = true;
     updateTrayMenu(); // Atualiza menu do Tray para "Parar"
-    sendLog(`👀 Monitorando ${config.projects.length} projetos...`, "info");
+    sendLog(`Monitorando ${config.projects.length} projetos...`, "info");
 });
 
 // --- STOP SYNC ---
@@ -294,7 +294,7 @@ ipcMain.on('stop-sync', async () => {
     isSyncing = false;
     updateTrayMenu(); // Atualiza menu do Tray para "Iniciar"
 
-    sendLog("🛑 Serviço parado.", "error");
+    sendLog("Servico parado.", "error");
 });
 
 // --- WATCHER ---
@@ -324,7 +324,7 @@ function createProjectWatcher(project, globalConfig) {
 
         if (shouldIgnore) {
             if (event !== 'unlink' && event !== 'unlinkDir') {
-                sendLog(`🚫 Ignorado: ${path.basename(fullPath)}`, "info");
+                sendLog(`Ignorado: ${path.basename(fullPath)}`, "info");
             }
             return;
         }
@@ -371,7 +371,7 @@ async function processQueue() {
         if (uploadQueue.length > 0) {
             processQueue();
         } else {
-            sendLog("🏁 Sincronismo em dia.", "info");
+            sendLog("Sincronismo em dia.", "info");
         }
     }
 }
@@ -396,24 +396,24 @@ async function handleSyncTask({ action, fullPath, projectConfig, globalConfig })
         }
 
         if (action === 'upload') {
-            sendLog(`⬆️ [Upload] ${relativePath}`, "info");
+            sendLog(`[Upload] ${relativePath}`, "info");
             await client.ensureDir(path.dirname(remotePath));
             await client.uploadFrom(fullPath, remotePath);
-            sendLog(`✅ Sucesso: ${relativePath}`, "success");
+            sendLog(`Sucesso: ${relativePath}`, "success");
         }
         else if (action === 'delete_file') {
-            sendLog(`🗑️ [Del File] ${relativePath}`, "error");
+            sendLog(`[Del File] ${relativePath}`, "error");
             try { await client.remove(remotePath); } catch (e) { if (!e.message.includes("550")) throw e; }
-            sendLog(`💀 Removido: ${relativePath}`, "success");
+            sendLog(`Removido: ${relativePath}`, "success");
         }
         else if (action === 'delete_dir') {
-            sendLog(`📂 [Del Dir] ${relativePath}`, "error");
+            sendLog(`[Del Dir] ${relativePath}`, "error");
             try { await client.removeDir(remotePath); } catch (e) { if (!e.message.includes("550")) throw e; }
-            sendLog(`💀 Pasta removida: ${relativePath}`, "success");
+            sendLog(`Pasta removida: ${relativePath}`, "success");
         }
 
     } catch (err) {
-        sendLog(`❌ Erro (${action}): ${err.message}`, "error");
+        sendLog(`Erro (${action}): ${err.message}`, "error");
     }
 }
 
