@@ -4,6 +4,7 @@ const { ipcRenderer } = require('electron');
 const projectList = document.getElementById('projects-list');
 const btnStart = document.getElementById('btnStart');
 const btnStop = document.getElementById('btnStop');
+const btnTest = document.getElementById('btnTest');
 const logsDiv = document.getElementById('logs');
 
 // Carregar dados salvos ao abrir
@@ -57,15 +58,50 @@ async function selectFolder(btn) {
     }
 }
 
+function collectConnectionConfig() {
+    return {
+        host: document.getElementById('host').value.trim(),
+        user: document.getElementById('user').value.trim(),
+        password: document.getElementById('password').value,
+        port: document.getElementById('port').value
+    };
+}
+
+function setSyncUiRunning(running) {
+    btnStart.style.display = running ? 'none' : 'block';
+    btnStop.style.display = running ? 'block' : 'none';
+    disableInputs(running);
+}
+
+async function testCredentials() {
+    const config = collectConnectionConfig();
+
+    if (!config.host || !config.user) {
+        alert("Preencha host e usuário para testar as credenciais.");
+        return;
+    }
+
+    const originalText = btnTest.innerText;
+    btnTest.disabled = true;
+    btnTest.innerText = 'Testando...';
+
+    try {
+        const result = await ipcRenderer.invoke('test-ftp-credentials', config);
+        alert(result.message);
+    } catch (err) {
+        alert(`Erro ao testar credenciais: ${err.message}`);
+    } finally {
+        btnTest.disabled = false;
+        btnTest.innerText = originalText;
+    }
+}
+
 // Salvar e Iniciar/Parar
 function toggleSync(start) {
     if (start) {
         // 1. Coletar dados
         const config = {
-            host: document.getElementById('host').value,
-            user: document.getElementById('user').value,
-            password: document.getElementById('password').value,
-            port: document.getElementById('port').value,
+            ...collectConnectionConfig(),
             projects: []
         };
 
@@ -89,20 +125,16 @@ function toggleSync(start) {
         ipcRenderer.send('start-sync', config);
 
         // UI Update
-        btnStart.style.display = 'none';
-        btnStop.style.display = 'block';
-        disableInputs(true);
+        setSyncUiRunning(true);
 
     } else {
         ipcRenderer.send('stop-sync');
-        btnStart.style.display = 'block';
-        btnStop.style.display = 'none';
-        disableInputs(false);
+        setSyncUiRunning(false);
     }
 }
 
 function disableInputs(disabled) {
-    const inputs = document.querySelectorAll('input, .btn-remove, .btn-add, .btn-folder');
+    const inputs = document.querySelectorAll('input, .btn-remove, .btn-add, .btn-folder, .btn-test');
     inputs.forEach(el => el.disabled = disabled);
 }
 
@@ -126,6 +158,6 @@ ipcRenderer.on('toggle-sync-request', () => {
 
 // Se der erro de conexão no Main, destrava a tela
 ipcRenderer.on('sync-error', () => {
-    setUiRunning(false);
+    setSyncUiRunning(false);
     alert("Erro ao conectar no FTP. Verifique o log.");
 });

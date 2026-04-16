@@ -167,6 +167,30 @@ ipcMain.handle('get-settings', () => {
     return store.get('config', { projects: [] });
 });
 
+ipcMain.handle('test-ftp-credentials', async (event, config) => {
+    const testClient = new ftp.Client();
+
+    sendLog("🔎 Testando credenciais FTP...", "info");
+
+    try {
+        await testClient.access({
+            host: config.host,
+            user: config.user,
+            password: config.password,
+            port: parseInt(config.port) || 21,
+            secure: false
+        });
+
+        sendLog("✅ Credenciais FTP válidas.", "success");
+        return { ok: true, message: "Conexão FTP estabelecida com sucesso!" };
+    } catch (err) {
+        sendLog(`❌ Falha no teste FTP: ${err.message}`, "error");
+        return { ok: false, message: `Falha ao conectar: ${err.message}` };
+    } finally {
+        testClient.close();
+    }
+});
+
 // 3. Selecionar Pasta (Diálogo nativo do SO)
 ipcMain.handle('select-folder', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {

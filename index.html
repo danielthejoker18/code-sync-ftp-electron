@@ -8,7 +8,7 @@
         body { background-color: #1e1e1e; color: #e0e0e0; font-family: 'Segoe UI', sans-serif; padding: 20px; user-select: none; }
         h3 { border-bottom: 1px solid #333; padding-bottom: 10px; margin-top: 0;}
         
-        .grid-ftp { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .grid-ftp { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; margin-bottom: 20px; align-items: end; }
         input { background: #2d2d2d; border: 1px solid #444; color: white; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box;}
         label { font-size: 12px; color: #aaa; display: block; margin-bottom: 5px;}
 
@@ -23,6 +23,8 @@
         .controls { display: flex; gap: 10px; margin-bottom: 20px; }
         .btn-start { background: #4caf50; color: white; width: 100%; font-size: 16px; padding: 12px;}
         .btn-stop { background: #f44336; color: white; width: 100%; font-size: 16px; display: none;}
+        .btn-test { background: #ff9800; color: white; }
+        .ftp-test-cell label { visibility: hidden; }
 
         #logs { background: #111; height: 250px; overflow-y: scroll; padding: 10px; font-family: monospace; font-size: 13px; border-radius: 5px; border: 1px solid #333;}
         .log-item { margin-bottom: 4px; border-bottom: 1px solid #222; padding-bottom: 2px; }
@@ -39,6 +41,10 @@
         <div><label>Usuário</label><input type="text" id="user"></div>
         <div><label>Senha</label><input type="password" id="password"></div>
         <div><label>Porta</label><input type="number" id="port" value="21"></div>
+        <div class="ftp-test-cell">
+            <label>Teste</label>
+            <button id="btnTest" class="btn-test" onclick="testCredentials()">Testar Conexão</button>
+        </div>
     </div>
 
     <h3>2. Mapeamento de Pastas</h3>
