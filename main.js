@@ -191,6 +191,53 @@ ipcMain.handle('test-ftp-credentials', async (event, config) => {
     }
 });
 
+ipcMain.handle('list-remote-directories', async (event, payload) => {
+    const { config, path: requestedPath } = payload || {};
+    const browserClient = new ftp.Client();
+
+    try {
+        await browserClient.access({
+            host: config.host,
+            user: config.user,
+            password: config.password,
+            port: parseInt(config.port) || 21,
+            secure: false
+        });
+
+        let targetPath = (requestedPath || '/').trim();
+        if (!targetPath.startsWith('/')) {
+            targetPath = `/${targetPath}`;
+        }
+
+        try {
+            await browserClient.cd(targetPath);
+        } catch (_) {
+            await browserClient.cd('/');
+        }
+
+        const currentPath = await browserClient.pwd();
+        const entries = await browserClient.list();
+        const directories = entries
+            .filter(item => item.isDirectory)
+            .map(item => item.name)
+            .filter(name => name !== '.' && name !== '..')
+            .sort((a, b) => a.localeCompare(b));
+
+        return {
+            ok: true,
+            currentPath,
+            directories
+        };
+    } catch (err) {
+        return {
+            ok: false,
+            message: `Falha ao listar diretórios remotos: ${err.message}`
+        };
+    } finally {
+        browserClient.close();
+    }
+});
+
 // 3. Selecionar Pasta (Diálogo nativo do SO)
 ipcMain.handle('select-folder', async () => {
     const result = await dialog.showOpenDialog(mainWindow, {

@@ -14,6 +14,7 @@
 
         .projects-container { margin-bottom: 20px; max-height: 200px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 5px;}
         .project-row { display: grid; grid-template-columns: 5fr 5fr 1fr; gap: 10px; margin-bottom: 10px; align-items: end;}
+        .remote-field { display: flex; gap: 5px; }
         
         button { cursor: pointer; padding: 8px 15px; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s;}
         .btn-add { background: #2196f3; color: white; }
@@ -24,7 +25,66 @@
         .btn-start { background: #4caf50; color: white; width: 100%; font-size: 16px; padding: 12px;}
         .btn-stop { background: #f44336; color: white; width: 100%; font-size: 16px; display: none;}
         .btn-test { background: #ff9800; color: white; }
+        .btn-remote-folder { background: #607d8b; color: white; white-space: nowrap; }
         .ftp-test-cell label { visibility: hidden; }
+
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+        }
+        .modal {
+            width: min(700px, 92vw);
+            margin: 60px auto;
+            background: #1b1b1b;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .modal h4 { margin: 0 0 8px; }
+        .remote-current-path {
+            font-family: monospace;
+            font-size: 13px;
+            color: #9ad;
+            background: #101010;
+            border: 1px solid #2d2d2d;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+        .remote-list {
+            height: 240px;
+            overflow-y: auto;
+            border: 1px solid #2d2d2d;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 12px;
+            background: #101010;
+        }
+        .remote-item {
+            width: 100%;
+            text-align: left;
+            padding: 8px;
+            margin-bottom: 6px;
+            background: #2a2a2a;
+            color: #ddd;
+            border: 1px solid #3a3a3a;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .remote-item:hover { background: #353535; }
+        .remote-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .remote-actions-right {
+            display: flex;
+            gap: 8px;
+        }
 
         #logs { background: #111; height: 250px; overflow-y: scroll; padding: 10px; font-family: monospace; font-size: 13px; border-radius: 5px; border: 1px solid #333;}
         .log-item { margin-bottom: 4px; border-bottom: 1px solid #222; padding-bottom: 2px; }
@@ -61,6 +121,21 @@
 
     <h3>Logs</h3>
     <div id="logs"></div>
+
+    <div id="remotePickerModal" class="modal-backdrop">
+        <div class="modal">
+            <h4>Selecionar Pasta Remota (FTP)</h4>
+            <div id="remoteCurrentPath" class="remote-current-path">/</div>
+            <div id="remoteList" class="remote-list"></div>
+            <div class="remote-actions">
+                <button id="remoteUpBtn" onclick="remotePickerGoUp()">Subir Pasta</button>
+                <div class="remote-actions-right">
+                    <button onclick="closeRemotePicker()">Cancelar</button>
+                    <button class="btn-test" onclick="confirmRemotePickerSelection()">Selecionar Esta Pasta</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="renderer.js"></script>
 </body>

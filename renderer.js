@@ -6,6 +6,14 @@ const btnStart = document.getElementById('btnStart');
 const btnStop = document.getElementById('btnStop');
 const btnTest = document.getElementById('btnTest');
 const logsDiv = document.getElementById('logs');
+const remotePickerModal = document.getElementById('remotePickerModal');
+const remoteCurrentPath = document.getElementById('remoteCurrentPath');
+const remoteList = document.getElementById('remoteList');
+
+const remotePickerState = {
+    targetInput: null,
+    currentPath: '/'
+};
 
 // Carregar dados salvos ao abrir
 window.onload = async () => {
@@ -37,7 +45,10 @@ function addProjectRow(localVal = '', remoteVal = '') {
             <input type="text" value="${localVal}" placeholder="Pasta Local (C:\\...)" class="input-local" readonly>
             <button class="btn-folder" onclick="selectFolder(this)">📂</button>
         </div>
-        <input type="text" value="${remoteVal}" placeholder="Pasta Remota (/web/...)" class="input-remote">
+        <div class="remote-field">
+            <input type="text" value="${remoteVal}" placeholder="Pasta Remota (/web/...)" class="input-remote">
+            <button class="btn-remote-folder" onclick="openRemotePicker(this)">📁 FTP</button>
+        </div>
         <button class="btn-remove" onclick="removeRow(this)">X</button>
     `;
     projectList.appendChild(div);
@@ -56,6 +67,99 @@ async function selectFolder(btn) {
         const inputLocal = btn.previousElementSibling;
         inputLocal.value = path;
     }
+}
+
+function normalizeRemotePath(path) {
+    if (!path || typeof path !== 'string') return '/';
+    const withSlash = path.startsWith('/') ? path : `/${path}`;
+    return withSlash.replace(/\/+/g, '/').replace(/\/$/, '') || '/';
+}
+
+function joinRemotePath(base, part) {
+    const cleanBase = normalizeRemotePath(base);
+    if (cleanBase === '/') return normalizeRemotePath(`/${part}`);
+    return normalizeRemotePath(`${cleanBase}/${part}`);
+}
+
+function parentRemotePath(path) {
+    const clean = normalizeRemotePath(path);
+    if (clean === '/') return '/';
+    const parts = clean.split('/').filter(Boolean);
+    parts.pop();
+    return parts.length ? `/${parts.join('/')}` : '/';
+}
+
+function renderRemoteDirectoryList(directories) {
+    remoteList.innerHTML = '';
+
+    if (!directories || directories.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'info';
+        empty.innerText = 'Nenhuma subpasta encontrada neste diretório.';
+        remoteList.appendChild(empty);
+        return;
+    }
+
+    directories.forEach(dirName => {
+        const btn = document.createElement('button');
+        btn.className = 'remote-item';
+        btn.innerText = `📁 ${dirName}`;
+        btn.onclick = () => loadRemoteDirectory(joinRemotePath(remotePickerState.currentPath, dirName));
+        remoteList.appendChild(btn);
+    });
+}
+
+async function loadRemoteDirectory(path) {
+    remoteList.innerHTML = '<div class="info">Carregando pastas remotas...</div>';
+
+    const result = await ipcRenderer.invoke('list-remote-directories', {
+        config: collectConnectionConfig(),
+        path
+    });
+
+    if (!result.ok) {
+        alert(result.message);
+        closeRemotePicker();
+        return;
+    }
+
+    remotePickerState.currentPath = normalizeRemotePath(result.currentPath);
+    remoteCurrentPath.innerText = remotePickerState.currentPath;
+    renderRemoteDirectoryList(result.directories);
+}
+
+async function openRemotePicker(btn) {
+    const config = collectConnectionConfig();
+    if (!config.host || !config.user) {
+        alert('Preencha host e usuário antes de navegar no FTP remoto.');
+        return;
+    }
+
+    const row = btn.closest('.project-row');
+    remotePickerState.targetInput = row.querySelector('.input-remote');
+    const initialPath = remotePickerState.targetInput.value || '/';
+
+    remotePickerModal.style.display = 'block';
+    await loadRemoteDirectory(initialPath);
+}
+
+function closeRemotePicker() {
+    remotePickerModal.style.display = 'none';
+    remotePickerState.targetInput = null;
+    remotePickerState.currentPath = '/';
+    remoteCurrentPath.innerText = '/';
+    remoteList.innerHTML = '';
+}
+
+async function remotePickerGoUp() {
+    await loadRemoteDirectory(parentRemotePath(remotePickerState.currentPath));
+}
+
+function confirmRemotePickerSelection() {
+    if (remotePickerState.targetInput) {
+        remotePickerState.targetInput.value = remotePickerState.currentPath;
+    }
+    closeRemotePicker();
 }
 
 function collectConnectionConfig() {
@@ -134,7 +238,7 @@ function toggleSync(start) {
 }
 
 function disableInputs(disabled) {
-    const inputs = document.querySelectorAll('input, .btn-remove, .btn-add, .btn-folder, .btn-test');
+    const inputs = document.querySelectorAll('input, .btn-remove, .btn-add, .btn-folder, .btn-test, .btn-remote-folder');
     inputs.forEach(el => el.disabled = disabled);
 }
 
