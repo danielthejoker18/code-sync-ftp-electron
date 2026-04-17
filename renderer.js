@@ -103,7 +103,7 @@ function renderRemoteDirectoryList(directories) {
     directories.forEach(dirName => {
         const btn = document.createElement('button');
         btn.className = 'remote-item';
-        btn.innerText = `Pasta: ${dirName}`;
+        btn.innerText = `${dirName}`;
         btn.onclick = () => loadRemoteDirectory(joinRemotePath(remotePickerState.currentPath, dirName));
         remoteList.appendChild(btn);
     });
