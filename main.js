@@ -16,6 +16,7 @@ let uploadQueue = [];
 let isUploading = false;
 let isSyncing = false; // Para controlar o texto do menu (Iniciar/Parar)
 let isQuitting = false; // Para saber se é pra fechar mesmo ou só esconder
+let currentlyProcessingTaskKey = null;
 
 // --- EVENTO BEFORE-QUIT (Correção para CMD+Q e Dock Quit) ---
 app.on('before-quit', () => {
@@ -253,6 +254,7 @@ ipcMain.on('start-sync', async (event, config) => {
 
     uploadQueue = [];
     isUploading = false;
+    currentlyProcessingTaskKey = null;
 
     if (!config.projects || config.projects.length === 0) {
         sendLog("Nenhuma pasta configurada!", "error");
@@ -290,6 +292,7 @@ ipcMain.on('stop-sync', async () => {
     client.close();
     uploadQueue = [];
     isUploading = false;
+    currentlyProcessingTaskKey = null;
 
     isSyncing = false;
     updateTrayMenu(); // Atualiza menu do Tray para "Iniciar"
@@ -310,7 +313,8 @@ function createProjectWatcher(project, globalConfig) {
         ignored: systemIgnored,
         persistent: true,
         ignoreInitial: true,
-        awaitWriteFinish: { stabilityThreshold: 500, pollInterval: 100 }
+        usePolling: false,
+        awaitWriteFinish: { stabilityThreshold: 1200, pollInterval: 250 }
     });
 
     w.on('all', async (event, fullPath) => {
@@ -352,6 +356,18 @@ async function stopAllWatchers() {
 // --- QUEUE ---
 
 function addToQueue(action, fullPath, projectConfig, globalConfig) {
+    const taskKey = `${action}:${projectConfig.local}:${fullPath}`;
+    const hasEquivalentPendingTask = uploadQueue.some(task => (
+        task.action === action &&
+        task.fullPath === fullPath &&
+        task.projectConfig.local === projectConfig.local
+    ));
+
+    // Evita enfileirar tarefas idênticas em sequência (principal fonte de uso alto de CPU e rede).
+    if (hasEquivalentPendingTask || currentlyProcessingTaskKey === taskKey) {
+        return;
+    }
+
     uploadQueue.push({ action, fullPath, projectConfig, globalConfig });
     processQueue();
 }
@@ -361,12 +377,14 @@ async function processQueue() {
 
     isUploading = true;
     const task = uploadQueue.shift();
+    currentlyProcessingTaskKey = `${task.action}:${task.projectConfig.local}:${task.fullPath}`;
 
     try {
         await handleSyncTask(task);
     } catch (err) {
         console.error("Erro na fila:", err);
     } finally {
+        currentlyProcessingTaskKey = null;
         isUploading = false;
         if (uploadQueue.length > 0) {
             processQueue();
