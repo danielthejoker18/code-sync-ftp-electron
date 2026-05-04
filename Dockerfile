@@ -55,3 +55,20 @@ CMD ["npm", "start"]
 
 FROM base AS build
 CMD ["npm", "run", "dist", "--", "--linux"]
+
+FROM base AS build-win
+RUN dpkg --add-architecture i386 \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    wine \
+    wine64 \
+    wine32:i386 \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV CSC_IDENTITY_AUTO_DISCOVERY=false \
+    WINEDEBUG=-all
+
+RUN xvfb-run -a wineboot --init \
+    && wineserver -w
+
+CMD ["npm", "run", "dist", "--", "--win"]

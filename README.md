@@ -80,7 +80,17 @@ npm run dist -- --win
 
 No Windows, use fluxo local com npm (sem Wine em Docker).
 
-### 5) Limpeza opcional
+> ⚠️ No Linux/WSL, o build para Windows requer o Wine instalado. Se você estiver em um ambiente Linux/WSL e não quiser instalar Wine, execute esse comando em uma máquina Windows nativa.
+
+### 5) Buildar instalador Windows via Docker
+
+```bash
+docker compose --profile build-win run --rm app-build-win
+```
+
+Esse profile usa um target Docker separado com Wine e não altera o build Linux.
+
+### 6) Limpeza opcional
 
 ```bash
 docker compose down -v
