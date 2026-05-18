@@ -3,6 +3,9 @@ const path = require('path');
 const Store = require('electron-store');
 const ftp = require("basic-ftp");
 const chokidar = require("chokidar");
+const fs = require('fs');
+const gracefulFs = require('graceful-fs');
+gracefulFs.gracefulify(fs);
 
 const store = new Store();
 
